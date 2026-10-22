@@ -24,11 +24,10 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
     ports:
-      - "5000:5000"
+      - "10101:5000"
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   mysql_data:
-
