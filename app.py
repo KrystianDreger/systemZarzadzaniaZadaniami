@@ -78,6 +78,13 @@ def create_app(test_config=None):
             db.session.rollback()
             return {"status": "error", "database": "unavailable"}, 503
 
+
+    @app.cli.command("init-db")
+    def init_db():
+        """Utwórz tabele bazy danych."""
+        db.create_all()
+        print("Baza danych została zainicjalizowana.")
+
     return app
 
 
