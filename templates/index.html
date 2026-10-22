@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student01 - Menedżer zadań</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="container">
+        <header class="header">
+            <div>
+                <p class="eyebrow">STUDENT01 / PROJECT</p>
+                <h1>Moje zadania</h1>
+                <p class="subtitle">
+                    Planuj, realizuj i śledź swoje postępy.
+                </p>
+            </div>
+            <div class="counter">{{ tasks|length }} zadań</div>
+        </header>
+
+        <section class="panel">
+            <h2>Dodaj nowe zadanie</h2>
+
+            <form action="{{ url_for('add_task') }}" method="post">
+                <label for="title">Nazwa zadania</label>
+                <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    maxlength="150"
+                    placeholder="Np. Przygotować projekt Dockera"
+                    required
+                >
+
+                <label for="description">Opis (opcjonalnie)</label>
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="3"
+                    placeholder="Dodatkowe informacje..."
+                ></textarea>
+
+                <button type="submit" class="primary">
+                    + Dodaj zadanie
+                </button>
+            </form>
+        </section>
+
+        <section class="tasks-section">
+            <h2>Lista zadań</h2>
+
+            {% if tasks %}
+                <div class="task-list">
+                    {% for task in tasks %}
+                        <article class="task-card {% if task.completed %}done{% endif %}">
+                            <div class="task-content">
+                                <div class="task-title-row">
+                                    <h3>{{ task.title }}</h3>
+                                    {% if task.completed %}
+                                        <span class="status completed">
+                                            Wykonane
+                                        </span>
+                                    {% else %}
+                                        <span class="status pending">
+                                            Do zrobienia
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                {% if task.description %}
+                                    <p class="description">
+                                        {{ task.description }}
+                                    </p>
+                                {% endif %}
+
+                                <p class="task-id">Zadanie #{{ task.id }}</p>
+                            </div>
+
+                            <form
+                                action="{{ url_for('complete_task', task_id=task.id) }}"
+                                method="post"
+                            >
+                                <button type="submit" class="secondary">
+                                    {% if task.completed %}
+                                        Cofnij
+                                    {% else %}
+                                        Oznacz jako wykonane
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">
+                    <h3>Brak zadań</h3>
+                    <p>Dodaj pierwsze zadanie za pomocą formularza powyżej.</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <footer>
+            Student01 · Python · Flask · MySQL · Docker
+        </footer>
+    </main>
+</body>
+</html>
+
