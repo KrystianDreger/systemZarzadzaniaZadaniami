@@ -1,111 +1,128 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student01 - Menedżer zadań</title>
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menedżer zadań</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <main class="container">
-        <header class="header">
-            <div>
-                <p class="eyebrow">STUDENT01 / PROJECT</p>
-                <h1>Moje zadania</h1>
-                <p class="subtitle">
-                    Planuj, realizuj i śledź swoje postępy.
-                </p>
+<main class="container">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">TASK MANAGER · FLASK + MYSQL</p>
+      <h1>Moje zadania</h1>
+      <p class="muted">Zaplanuj pracę, ustal priorytety i śledź postępy.</p>
+    </div>
+    <a class="button secondary" href="{{ url_for('export_csv') }}">Pobierz CSV ↓</a>
+  </header>
+
+  <section class="stats" aria-label="Statystyki zadań">
+    <article class="stat"><span>Wszystkie</span><strong>{{ stats.total }}</strong></article>
+    <article class="stat"><span>Do zrobienia</span><strong>{{ stats.open }}</strong></article>
+    <article class="stat"><span>Wykonane</span><strong>{{ stats.completed }}</strong></article>
+    <article class="stat {% if stats.overdue %}stat-alert{% endif %}"><span>Zaległe</span><strong>{{ stats.overdue }}</strong></article>
+  </section>
+
+  <section class="panel">
+    <div class="section-heading">
+      <div><p class="eyebrow">NOWE ZADANIE</p><h2>Co trzeba zrobić?</h2></div>
+    </div>
+    <form action="{{ url_for('add_task') }}" method="post" class="task-form">
+      <div class="field full">
+        <label for="title">Nazwa zadania</label>
+        <input id="title" name="title" maxlength="150" placeholder="Np. Przygotować prezentację" required>
+      </div>
+      <div class="field full">
+        <label for="description">Opis (opcjonalnie)</label>
+        <textarea id="description" name="description" rows="2" placeholder="Dodaj szczegóły..."></textarea>
+      </div>
+      <div class="field">
+        <label for="priority">Priorytet</label>
+        <select id="priority" name="priority">
+          <option value="low">Niski</option><option value="medium" selected>Średni</option><option value="high">Wysoki</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="due_date">Termin (opcjonalnie)</label>
+        <input id="due_date" name="due_date" type="date">
+      </div>
+      <div class="field full"><button class="button primary" type="submit">+ Dodaj zadanie</button></div>
+    </form>
+  </section>
+
+  <section class="tasks-section">
+    <div class="section-heading">
+      <div><p class="eyebrow">TWOJA LISTA</p><h2>Zadania <span class="count">{{ tasks|length }}</span></h2></div>
+    </div>
+    <form method="get" action="{{ url_for('index') }}" class="filters">
+      <div class="field search-field">
+        <label for="q">Szukaj</label>
+        <input id="q" name="q" value="{{ search }}" placeholder="Nazwa lub opis...">
+      </div>
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="all" {% if status == 'all' %}selected{% endif %}>Wszystkie</option>
+          <option value="open" {% if status == 'open' %}selected{% endif %}>Do zrobienia</option>
+          <option value="done" {% if status == 'done' %}selected{% endif %}>Wykonane</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filter-priority">Priorytet</label>
+        <select id="filter-priority" name="priority">
+          <option value="all" {% if priority == 'all' %}selected{% endif %}>Wszystkie</option>
+          {% for key, label in priorities.items() %}
+          <option value="{{ key }}" {% if priority == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="button secondary filter-button" type="submit">Filtruj</button>
+      <a class="reset-link" href="{{ url_for('index') }}">Wyczyść</a>
+    </form>
+
+    {% if tasks %}
+      <div class="task-list">
+      {% for task in tasks %}
+        <article class="task-card {% if task.completed %}done{% endif %}">
+          <div class="task-main">
+            <div class="task-title-row">
+              <h3>{{ task.title }}</h3>
+              <span class="badge priority-{{ task.priority }}">{{ priorities.get(task.priority, 'Średni') }} priorytet</span>
+              {% if task.completed %}<span class="badge completed">Wykonane</span>
+              {% else %}<span class="badge pending">Do zrobienia</span>{% endif %}
             </div>
-            <div class="counter">{{ tasks|length }} zadań</div>
-        </header>
-
-        <section class="panel">
-            <h2>Dodaj nowe zadanie</h2>
-
-            <form action="{{ url_for('add_task') }}" method="post">
-                <label for="title">Nazwa zadania</label>
-                <input
-                    id="title"
-                    name="title"
-                    type="text"
-                    maxlength="150"
-                    placeholder="Np. Przygotować projekt Dockera"
-                    required
-                >
-
-                <label for="description">Opis (opcjonalnie)</label>
-                <textarea
-                    id="description"
-                    name="description"
-                    rows="3"
-                    placeholder="Dodatkowe informacje..."
-                ></textarea>
-
-                <button type="submit" class="primary">
-                    + Dodaj zadanie
-                </button>
+            {% if task.description %}<p class="description">{{ task.description }}</p>{% endif %}
+            <div class="task-meta">
+              <span>#{{ task.id }}</span>
+              {% if task.due_date %}
+                <span class="{% if not task.completed and task.due_date < today %}overdue{% endif %}">
+                  Termin: {{ task.due_date.strftime('%d.%m.%Y') }}
+                  {% if not task.completed and task.due_date < today %} · po terminie{% endif %}
+                </span>
+              {% else %}<span>Bez terminu</span>{% endif %}
+            </div>
+          </div>
+          <div class="task-actions">
+            <form action="{{ url_for('complete_task', task_id=task.id) }}" method="post">
+              <button class="button {{ 'secondary' if task.completed else 'primary' }}" type="submit">
+                {{ 'Cofnij' if task.completed else '✓ Wykonane' }}
+              </button>
             </form>
-        </section>
+            <a class="button secondary" href="{{ url_for('edit_task', task_id=task.id) }}">Edytuj</a>
+            <form action="{{ url_for('delete_task', task_id=task.id) }}" method="post" onsubmit="return confirm('Czy na pewno usunąć to zadanie?');">
+              <button class="button danger" type="submit">Usuń</button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty"><h3>Nie znaleziono zadań</h3><p>Dodaj zadanie albo zmień kryteria wyszukiwania.</p></div>
+    {% endif %}
+  </section>
 
-        <section class="tasks-section">
-            <h2>Lista zadań</h2>
-
-            {% if tasks %}
-                <div class="task-list">
-                    {% for task in tasks %}
-                        <article class="task-card {% if task.completed %}done{% endif %}">
-                            <div class="task-content">
-                                <div class="task-title-row">
-                                    <h3>{{ task.title }}</h3>
-                                    {% if task.completed %}
-                                        <span class="status completed">
-                                            Wykonane
-                                        </span>
-                                    {% else %}
-                                        <span class="status pending">
-                                            Do zrobienia
-                                        </span>
-                                    {% endif %}
-                                </div>
-
-                                {% if task.description %}
-                                    <p class="description">
-                                        {{ task.description }}
-                                    </p>
-                                {% endif %}
-
-                                <p class="task-id">Zadanie #{{ task.id }}</p>
-                            </div>
-
-                            <form
-                                action="{{ url_for('complete_task', task_id=task.id) }}"
-                                method="post"
-                            >
-                                <button type="submit" class="secondary">
-                                    {% if task.completed %}
-                                        Cofnij
-                                    {% else %}
-                                        Oznacz jako wykonane
-                                    {% endif %}
-                                </button>
-                            </form>
-                        </article>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty">
-                    <h3>Brak zadań</h3>
-                    <p>Dodaj pierwsze zadanie za pomocą formularza powyżej.</p>
-                </div>
-            {% endif %}
-        </section>
-
-        <footer>
-            Student01 · Python · Flask · MySQL · Docker
-        </footer>
-    </main>
+  <footer>Python · Flask · SQLAlchemy · MySQL · Docker</footer>
+</main>
 </body>
 </html>
-

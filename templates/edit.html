@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edytuj zadanie</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="container narrow">
+  <header class="hero"><div><p class="eyebrow">ZADANIE #{{ task.id }}</p><h1>Edytuj zadanie</h1><p class="muted">Zmień dane i zapisz aktualizację.</p></div></header>
+  <section class="panel">
+    {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+    <form method="post" class="task-form">
+      <div class="field full"><label for="title">Nazwa zadania</label><input id="title" name="title" maxlength="150" value="{{ task.title }}" required></div>
+      <div class="field full"><label for="description">Opis</label><textarea id="description" name="description" rows="4">{{ task.description }}</textarea></div>
+      <div class="field"><label for="priority">Priorytet</label><select id="priority" name="priority">{% for key, label in priorities.items() %}<option value="{{ key }}" {% if task.priority == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="due_date">Termin</label><input id="due_date" name="due_date" type="date" value="{{ task.due_date.isoformat() if task.due_date else '' }}"></div>
+      <div class="field full actions-row"><button class="button primary" type="submit">Zapisz zmiany</button><a class="button secondary" href="{{ url_for('index') }}">Anuluj</a></div>
+    </form>
+  </section>
+</main>
+</body>
+</html>
