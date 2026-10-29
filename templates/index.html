@@ -6,6 +6,33 @@
   <title>Menedżer zadań</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
+<script>
+    (() => {
+      const form = document.getElementById('filters-form');
+      if (!form) return;
+
+      const search = document.getElementById('q');
+      let timer;
+
+      const applyFilters = () => {
+        const params = new URLSearchParams(new FormData(form));
+        window.location.assign(`${form.action}?${params.toString()}`);
+      };
+
+      // Wyszukiwanie automatyczne
+      search.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(applyFilters, 350);
+      });
+
+      // Filtruj natychmiast po zmianie selecta
+      form.querySelectorAll('select').forEach(select => {
+        select.addEventListener('change', applyFilters);
+      });
+    })();
+</script>
+
 <body>
 <main class="container">
   <header class="hero">
@@ -55,7 +82,7 @@
     <div class="section-heading">
       <div><p class="eyebrow">TWOJA LISTA</p><h2>Zadania <span class="count">{{ tasks|length }}</span></h2></div>
     </div>
-    <form method="get" action="{{ url_for('index') }}" class="filters">
+      <form method="get" action="{{ url_for('index') }}" class="filters glass" id="filters-form">
       <div class="field search-field">
         <label for="q">Szukaj</label>
         <input id="q" name="q" value="{{ search }}" placeholder="Nazwa lub opis...">
@@ -110,9 +137,31 @@
               </button>
             </form>
             <a class="button secondary" href="{{ url_for('edit_task', task_id=task.id) }}">Edytuj</a>
-            <form action="{{ url_for('delete_task', task_id=task.id) }}" method="post" onsubmit="return confirm('Czy na pewno usunąć to zadanie?');">
-              <button class="button danger" type="submit">Usuń</button>
-            </form>
+              <div class="delete-control">
+                  <form
+                          action="{{ url_for('delete_task', task_id=task.id) }}"
+                          method="post"
+                          class="delete-form"
+                  >
+                      <button
+                              class="button danger delete-trigger"
+                              type="button"
+                              aria-expanded="false"
+                      >
+                          Usuń
+                      </button>
+
+                      <span class="delete-confirm" hidden>
+      <span>Usunąć zadanie?</span>
+      <button class="button danger" type="submit">
+        Tak, usuń
+      </button>
+      <button class="button secondary cancel-delete" type="button">
+        Anuluj
+      </button>
+    </span>
+                  </form>
+              </div>
           </div>
         </article>
       {% endfor %}
@@ -125,4 +174,27 @@
   <footer>Python · Flask · SQLAlchemy · MySQL · Docker</footer>
 </main>
 </body>
+
+<script>
+    document.querySelectorAll('.delete-control').forEach(control => {
+  const trigger = control.querySelector('.delete-trigger');
+  const confirmation = control.querySelector('.delete-confirm');
+  const cancel = control.querySelector('.cancel-delete');
+
+  trigger.addEventListener('click', () => {
+    confirmation.hidden = !confirmation.hidden;
+    trigger.setAttribute(
+      'aria-expanded',
+      String(!confirmation.hidden)
+    );
+  });
+
+  cancel.addEventListener('click', () => {
+    confirmation.hidden = true;
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.focus();
+  });
+});
+</script>
+
 </html>
