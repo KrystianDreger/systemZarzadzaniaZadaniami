@@ -88,3 +88,86 @@ body {
     max-width: calc(100vw - 48px);
   }
 }
+
+
+.filters {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(120px, 150px)
+        minmax(120px, 150px)
+        auto
+        auto;
+    align-items: end;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.filters .field {
+    min-width: 0;
+    width: 100%;
+}
+
+.filters .field label {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+}
+
+.filters input,
+.filters select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.filters .button {
+    min-width: 0;
+    max-width: 100%;
+    padding: 11px 13px;
+}
+
+.filters .reset-link {
+    white-space: nowrap;
+    text-align: center;
+    padding: 12px 2px;
+}
+
+/* Tablety */
+@media (max-width: 850px) {
+    .filters {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .filters .search-field {
+        grid-column: 1 / -1;
+    }
+
+    .filters .filter-button {
+        width: 100%;
+    }
+}
+
+/* Telefony */
+@media (max-width: 480px) {
+    .filters {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .filters .search-field {
+        grid-column: auto;
+    }
+
+    .filters .reset-link {
+        justify-self: start;
+    }
+}
